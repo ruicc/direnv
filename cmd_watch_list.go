@@ -73,7 +73,7 @@ func watchListCommand(env *Env, args []string) (err error) {
 		i++
 	}
 
-	e := make(ShellExport)
+	e := NewShellExport()
 	e.Add(DIRENV_WATCHES, watches.Marshal())
 
 	os.Stdout.WriteString(shell.Export(e))

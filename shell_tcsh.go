@@ -14,14 +14,15 @@ func (sh tcsh) Hook() (string, error) {
 	return "alias precmd 'eval `{{.SelfPath}} export tcsh`'", nil
 }
 
-func (sh tcsh) Export(e ShellExport) (out string) {
-	for key, value := range e {
+func (sh tcsh) Export(e *ShellExport) (out string) {
+	for key, value := range e.EnvVars {
 		if value == nil {
 			out += sh.unset(key)
 		} else {
 			out += sh.export(key, *value)
 		}
 	}
+	// TODO: Aliases
 	return out
 }
 

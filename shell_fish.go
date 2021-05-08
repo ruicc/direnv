@@ -40,14 +40,15 @@ func (sh fish) Hook() (string, error) {
 	return fishHook, nil
 }
 
-func (sh fish) Export(e ShellExport) (out string) {
-	for key, value := range e {
+func (sh fish) Export(e *ShellExport) (out string) {
+	for key, value := range e.EnvVars {
 		if value == nil {
 			out += sh.unset(key)
 		} else {
 			out += sh.export(key, *value)
 		}
 	}
+	// TODO: Aliases
 	return out
 }
 

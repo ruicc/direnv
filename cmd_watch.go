@@ -48,8 +48,9 @@ func cmdWatchAction(env *Env, args []string) (err error) {
 		}
 	}
 
-	e := make(ShellExport)
+	e := NewShellExport()
 	e.Add(DIRENV_WATCHES, watches.Marshal())
+	// TODO: Aliases
 
 	os.Stdout.WriteString(shell.Export(e))
 

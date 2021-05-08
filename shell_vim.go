@@ -14,14 +14,15 @@ func (sh vim) Hook() (string, error) {
 	return "", errors.New("this feature is not supported. Install the direnv.vim plugin instead")
 }
 
-func (sh vim) Export(e ShellExport) (out string) {
-	for key, value := range e {
+func (sh vim) Export(e *ShellExport) (out string) {
+	for key, value := range e.EnvVars {
 		if value == nil {
 			out += sh.unset(key)
 		} else {
 			out += sh.export(key, *value)
 		}
 	}
+	// TODO: Aliases
 	return out
 }
 

@@ -11,7 +11,7 @@ type Shell interface {
 	Hook() (string, error)
 
 	// Export outputs the ShellExport as an evaluatable string on the host shell
-	Export(e ShellExport) string
+	Export(e *ShellExport) string
 
 	// Dump outputs and evaluatable string that sets the env in the host shell
 	Dump(env *Env) string
@@ -19,16 +19,28 @@ type Shell interface {
 
 // ShellExport represents environment variables to add and remove on the host
 // shell.
-type ShellExport map[string]*string
+type ShellExport struct {
+	EnvVars map[string]*string
+	Aliases map[string]*string
+}
+
+func NewShellExport() *ShellExport {
+	return &ShellExport{
+		EnvVars: make(map[string]*string),
+		Aliases: make(map[string]*string),
+	}
+}
 
 // Add represents the additon of a new environment variable
 func (e ShellExport) Add(key, value string) {
-	e[key] = &value
+	e.EnvVars[key] = &value
+	// TODO: Aliases?
 }
 
 // Remove represents the removal of a given `key` environment variable.
 func (e ShellExport) Remove(key string) {
-	e[key] = nil
+	e.EnvVars[key] = nil
+	// TODO: Aliases?
 }
 
 // DetectShell returns a Shell instance from the given target.

@@ -52,7 +52,7 @@ func watchDirCommand(env *Env, args []string) (err error) {
 		return fmt.Errorf("failed to recursively watch dir '%s': %w", dir, err)
 	}
 
-	e := make(ShellExport)
+	e := NewShellExport()
 	e.Add(DIRENV_WATCHES, watches.Marshal())
 
 	os.Stdout.WriteString(shell.Export(e))

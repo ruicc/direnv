@@ -86,7 +86,7 @@ func (diff *EnvDiff) Any() bool {
 // the target `shell`. The outputted string is then meant to be evaluated in
 // the target shell.
 func (diff *EnvDiff) ToShell(shell Shell) string {
-	e := make(ShellExport)
+	e := NewShellExport()
 
 	for key := range diff.Prev {
 		_, ok := diff.Next[key]

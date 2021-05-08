@@ -97,7 +97,7 @@ func (env Env) ToGoEnv() []string {
 // ToShell outputs the environment into an evaluatable string that is
 // understood by the target shell
 func (env Env) ToShell(shell Shell) string {
-	e := make(ShellExport)
+	e := NewShellExport()
 
 	for key, value := range env.EnvVars {
 		e.Add(key, value)
