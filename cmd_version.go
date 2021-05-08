@@ -13,7 +13,7 @@ var CmdVersion = &Cmd{
 	Desc:    "prints the version (" + Version + ") or checks that direnv is older than VERSION_AT_LEAST.",
 	Args:    []string{"[VERSION_AT_LEAST]"},
 	Aliases: []string{"--version"},
-	Action: actionSimple(func(env Env, args []string) error {
+	Action: actionSimple(func(env *Env, args []string) error {
 		semVersion := "v" + Version
 		if len(args) > 1 {
 			atLeast := args[1]

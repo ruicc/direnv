@@ -15,7 +15,7 @@ var CmdWatchDir = &Cmd{
 	Action:  actionSimple(watchDirCommand),
 }
 
-func watchDirCommand(env Env, args []string) (err error) {
+func watchDirCommand(env *Env, args []string) (err error) {
 	if len(args) < 3 {
 		return fmt.Errorf("a directory is required to add to the list of watches")
 	}
@@ -34,7 +34,7 @@ func watchDirCommand(env Env, args []string) (err error) {
 	}
 
 	watches := NewFileTimes()
-	watchString, ok := env[DIRENV_WATCHES]
+	watchString, ok := env.EnvVars[DIRENV_WATCHES]
 	if ok {
 		err = watches.Unmarshal(watchString)
 		if err != nil {

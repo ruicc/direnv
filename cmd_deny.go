@@ -13,7 +13,7 @@ var CmdDeny = &Cmd{
 	Action: actionWithConfig(cmdDenyAction),
 }
 
-func cmdDenyAction(env Env, args []string, config *Config) (err error) {
+func cmdDenyAction(env *Env, args []string, config *Config) (err error) {
 	var rcPath string
 
 	if len(args) > 1 {

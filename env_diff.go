@@ -40,29 +40,30 @@ func NewEnvDiff() *EnvDiff {
 
 // BuildEnvDiff analyses the changes between 'e1' and 'e2' and builds an
 // EnvDiff out of it.
-func BuildEnvDiff(e1, e2 Env) *EnvDiff {
+func BuildEnvDiff(e1, e2 *Env) *EnvDiff {
+	// TODO: Aliases?
 	diff := NewEnvDiff()
 
-	in := func(key string, e Env) bool {
-		_, ok := e[key]
+	in := func(key string, e *Env) bool {
+		_, ok := e.EnvVars[key]
 		return ok
 	}
 
-	for key := range e1 {
+	for key := range e1.EnvVars {
 		if IgnoredEnv(key) {
 			continue
 		}
-		if e2[key] != e1[key] || !in(key, e2) {
-			diff.Prev[key] = e1[key]
+		if e2.EnvVars[key] != e1.EnvVars[key] || !in(key, e2) {
+			diff.Prev[key] = e1.EnvVars[key]
 		}
 	}
 
-	for key := range e2 {
+	for key := range e2.EnvVars {
 		if IgnoredEnv(key) {
 			continue
 		}
-		if e2[key] != e1[key] || !in(key, e1) {
-			diff.Next[key] = e2[key]
+		if e2.EnvVars[key] != e1.EnvVars[key] || !in(key, e1) {
+			diff.Next[key] = e2.EnvVars[key]
 		}
 	}
 
@@ -103,19 +104,19 @@ func (diff *EnvDiff) ToShell(shell Shell) string {
 
 // Patch applies the diff to the given env and returns a new env with the
 // changes applied.
-func (diff *EnvDiff) Patch(env Env) (newEnv Env) {
-	newEnv = make(Env)
+func (diff *EnvDiff) Patch(env *Env) (newEnv *Env) {
+	newEnv = NewEnv()
 
-	for k, v := range env {
-		newEnv[k] = v
+	for k, v := range env.EnvVars {
+		newEnv.EnvVars[k] = v
 	}
 
 	for key := range diff.Prev {
-		delete(newEnv, key)
+		delete(newEnv.EnvVars, key)
 	}
 
 	for key, value := range diff.Next {
-		newEnv[key] = value
+		newEnv.EnvVars[key] = value
 	}
 
 	return newEnv

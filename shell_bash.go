@@ -35,8 +35,8 @@ func (sh bash) Export(e ShellExport) (out string) {
 	return out
 }
 
-func (sh bash) Dump(env Env) (out string) {
-	for key, value := range env {
+func (sh bash) Dump(env *Env) (out string) {
+	for key, value := range env.EnvVars {
 		out += sh.export(key, value)
 	}
 	return out

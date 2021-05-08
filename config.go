@@ -14,7 +14,7 @@ import (
 
 // Config represents the direnv configuration and state.
 type Config struct {
-	Env             Env
+	Env             *Env
 	WorkDir         string // Current directory
 	ConfDir         string
 	CacheDir        string
@@ -59,14 +59,14 @@ type tomlWhitelist struct {
 }
 
 // LoadConfig opens up the direnv configuration from the Env.
-func LoadConfig(env Env) (config *Config, err error) {
+func LoadConfig(env *Env) (config *Config, err error) {
 	config = &Config{
 		Env: env,
 	}
 
-	config.ConfDir = env[DIRENV_CONFIG]
+	config.ConfDir = env.EnvVars[DIRENV_CONFIG]
 	if config.ConfDir == "" {
-		config.ConfDir = xdg.ConfigDir(env, "direnv")
+		config.ConfDir = xdg.ConfigDir(env.EnvVars, "direnv") // TODO: Aliases?
 	}
 	if config.ConfDir == "" {
 		err = fmt.Errorf("couldn't find a configuration directory for direnv")
@@ -87,7 +87,7 @@ func LoadConfig(env Env) (config *Config, err error) {
 		return
 	}
 
-	config.RCDir = env[DIRENV_DIR]
+	config.RCDir = env.EnvVars[DIRENV_DIR]
 	if len(config.RCDir) > 0 && config.RCDir[0:1] == "-" {
 		config.RCDir = config.RCDir[1:]
 	}
@@ -144,8 +144,8 @@ func LoadConfig(env Env) (config *Config, err error) {
 	}
 
 	if config.BashPath == "" {
-		if env[DIRENV_BASH] != "" {
-			config.BashPath = env[DIRENV_BASH]
+		if env.EnvVars[DIRENV_BASH] != "" {
+			config.BashPath = env.EnvVars[DIRENV_BASH]
 		} else if bashPath != "" {
 			config.BashPath = bashPath
 		} else if config.BashPath, err = exec.LookPath("bash"); err != nil {
@@ -155,7 +155,7 @@ func LoadConfig(env Env) (config *Config, err error) {
 	}
 
 	if config.CacheDir == "" {
-		config.CacheDir = xdg.CacheDir(env, "direnv")
+		config.CacheDir = xdg.CacheDir(env.EnvVars, "direnv") // TODO: Aliases?
 	}
 	if config.CacheDir == "" {
 		err = fmt.Errorf("couldn't find a cache directory for direnv")
@@ -163,7 +163,7 @@ func LoadConfig(env Env) (config *Config, err error) {
 	}
 
 	if config.DataDir == "" {
-		config.DataDir = xdg.DataDir(env, "direnv")
+		config.DataDir = xdg.DataDir(env.EnvVars, "direnv") // TODO: Aliases?
 	}
 	if config.DataDir == "" {
 		err = fmt.Errorf("couldn't find a data directory for direnv")
@@ -186,13 +186,13 @@ func (config *Config) LoadedRC() *RC {
 	}
 	rcPath := filepath.Join(config.RCDir, ".envrc")
 
-	timesString := config.Env[DIRENV_WATCHES]
+	timesString := config.Env.EnvVars[DIRENV_WATCHES]
 
 	return RCFromEnv(rcPath, timesString, config)
 }
 
 // EnvFromRC loads an RC from a specified path and returns the new environment
-func (config *Config) EnvFromRC(path string, previousEnv Env) (Env, error) {
+func (config *Config) EnvFromRC(path string, previousEnv *Env) (*Env, error) {
 	rc, err := RCFromPath(path, config)
 	if err != nil {
 		return nil, err
@@ -207,13 +207,15 @@ func (config *Config) FindRC() (*RC, error) {
 
 // Revert undoes the recorded changes (if any) to the supplied environment,
 // returning a new environment
-func (config *Config) Revert(env Env) (Env, error) {
-	if config.Env[DIRENV_DIFF] == "" {
-		return env.Copy(), nil
+func (config *Config) Revert(env *Env) (*Env, error) {
+	if config.Env.EnvVars[DIRENV_DIFF] == "" {
+		envCopy := env.Copy()
+		return envCopy, nil
 	}
-	diff, err := LoadEnvDiff(config.Env[DIRENV_DIFF])
+	diff, err := LoadEnvDiff(config.Env.EnvVars[DIRENV_DIFF])
 	if err == nil {
-		return diff.Reverse().Patch(env), nil
+		patched := diff.Reverse().Patch(env)
+		return patched, nil // TODO: Aliases? => Should patch to env. Correct.
 	}
 	return nil, err
 }

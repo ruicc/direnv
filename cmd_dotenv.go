@@ -20,9 +20,9 @@ var CmdDotEnv = &Cmd{
 	Action:  actionSimple(cmdDotEnvAction),
 }
 
-func cmdDotEnvAction(env Env, args []string) (err error) {
+func cmdDotEnvAction(env *Env, args []string) (err error) {
 	var shell Shell
-	var newenv Env
+	var newenv Env = Env{} // TODO: aliases??
 	var target string
 
 	if len(args) > 1 {
@@ -44,7 +44,7 @@ func cmdDotEnvAction(env Env, args []string) (err error) {
 		return
 	}
 
-	newenv, err = dotenv.Parse(string(data))
+	newenv.EnvVars, err = dotenv.Parse(string(data))
 	if err != nil {
 		return err
 	}

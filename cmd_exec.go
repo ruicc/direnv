@@ -15,10 +15,10 @@ var CmdExec = &Cmd{
 	Action: actionWithConfig(cmdExecAction),
 }
 
-func cmdExecAction(env Env, args []string, config *Config) (err error) {
+func cmdExecAction(env *Env, args []string, config *Config) (err error) {
 	var (
-		newEnv      Env
-		previousEnv Env
+		newEnv      *Env
+		previousEnv *Env
 		rcPath      string
 		command     string
 	)
@@ -61,9 +61,9 @@ func cmdExecAction(env Env, args []string, config *Config) (err error) {
 	}
 
 	var commandPath string
-	commandPath, err = lookPath(command, newEnv["PATH"])
+	commandPath, err = lookPath(command, newEnv.EnvVars["PATH"])
 	if err != nil {
-		err = fmt.Errorf("command '%s' not found on PATH '%s'", command, newEnv["PATH"])
+		err = fmt.Errorf("command '%s' not found on PATH '%s'", command, newEnv.EnvVars["PATH"])
 		return
 	}
 

@@ -19,6 +19,6 @@ func (s gzenvShell) Export(e ShellExport) string {
 	return gzenv.Marshal(e)
 }
 
-func (s gzenvShell) Dump(env Env) string {
+func (s gzenvShell) Dump(env *Env) string {
 	return gzenv.Marshal(env)
 }

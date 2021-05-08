@@ -14,7 +14,7 @@ var CmdPrune = &Cmd{
 	Action: actionWithConfig(cmdPruneAction),
 }
 
-func cmdPruneAction(env Env, args []string, config *Config) (err error) {
+func cmdPruneAction(env *Env, args []string, config *Config) (err error) {
 	var dir *os.File
 	var fi os.FileInfo
 	var dirList []string

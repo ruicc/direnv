@@ -18,7 +18,7 @@ var CmdEdit = &Cmd{
 	Action: actionWithConfig(cmdEditAction),
 }
 
-func cmdEditAction(env Env, args []string, config *Config) (err error) {
+func cmdEditAction(env *Env, args []string, config *Config) (err error) {
 	var rcPath string
 	var times *FileTimes
 	var foundRC *RC
@@ -47,10 +47,10 @@ func cmdEditAction(env Env, args []string, config *Config) (err error) {
 		rcPath = foundRC.path
 	}
 
-	editor := env["EDITOR"]
+	editor := env.EnvVars["EDITOR"]
 	if editor == "" {
 		logError("$EDITOR not found.")
-		editor = detectEditor(env["PATH"])
+		editor = detectEditor(env.EnvVars["PATH"])
 		if editor == "" {
 			err = fmt.Errorf("could not find a default editor in the PATH")
 			return

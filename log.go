@@ -15,10 +15,10 @@ const (
 var debugging bool
 var noColor = os.Getenv("TERM") == "dumb"
 
-func setupLogging(env Env) {
+func setupLogging(env *Env) {
 	log.SetFlags(0)
 	log.SetPrefix("")
-	if val, ok := env[DIRENV_DEBUG]; ok && val == "1" {
+	if val, ok := env.EnvVars[DIRENV_DEBUG]; ok && val == "1" {
 		debugging = true
 		log.SetFlags(log.Ltime)
 		log.SetPrefix("direnv: ")
@@ -33,8 +33,8 @@ func logError(msg string, a ...interface{}) {
 	}
 }
 
-func logStatus(env Env, msg string, a ...interface{}) {
-	format, ok := env["DIRENV_LOG_FORMAT"]
+func logStatus(env *Env, msg string, a ...interface{}) {
+	format, ok := env.EnvVars["DIRENV_LOG_FORMAT"]
 	if !ok {
 		format = defaultLogFormat
 	}

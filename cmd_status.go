@@ -9,7 +9,7 @@ import (
 var CmdStatus = &Cmd{
 	Name: "status",
 	Desc: "prints some debug status information",
-	Action: actionWithConfig(func(env Env, args []string, config *Config) error {
+	Action: actionWithConfig(func(env *Env, args []string, config *Config) error {
 		fmt.Println("direnv exec path", config.SelfPath)
 		fmt.Println("DIRENV_CONFIG", config.ConfDir)
 

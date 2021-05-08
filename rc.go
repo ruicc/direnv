@@ -133,16 +133,16 @@ const notAllowed = "%s is blocked. Run `direnv allow` to approve its content"
 // Load evaluates the RC file and returns the new Env or error.
 //
 // This functions is key to the implementation of direnv.
-func (rc *RC) Load(previousEnv Env) (newEnv Env, err error) {
+func (rc *RC) Load(previousEnv *Env) (newEnv *Env, err error) {
 	config := rc.config
 	wd := config.WorkDir
 	direnv := config.SelfPath
 	newEnv = previousEnv.Copy()
-	newEnv[DIRENV_WATCHES] = rc.times.Marshal()
+	newEnv.EnvVars[DIRENV_WATCHES] = rc.times.Marshal()
 	defer func() {
 		// Record directory changes even if load is disallowed or fails
-		newEnv[DIRENV_DIR] = "-" + filepath.Dir(rc.path)
-		newEnv[DIRENV_DIFF] = previousEnv.Diff(newEnv).Serialize()
+		newEnv.EnvVars[DIRENV_DIR] = "-" + filepath.Dir(rc.path)
+		newEnv.EnvVars[DIRENV_DIFF] = previousEnv.Diff(newEnv).Serialize()
 	}()
 
 	if !rc.Allowed() {
@@ -188,7 +188,7 @@ func (rc *RC) Load(previousEnv Env) (newEnv Env, err error) {
 	}
 
 	if out, err := cmd.Output(); err == nil && len(out) > 0 {
-		var newEnv2 Env
+		var newEnv2 *Env
 		newEnv2, err = LoadEnvJSON(out)
 		if err == nil {
 			newEnv = newEnv2

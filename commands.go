@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-type actionSimple func(env Env, args []string) error
+type actionSimple func(env *Env, args []string) error
 
-func (fn actionSimple) Call(env Env, args []string, config *Config) error {
+func (fn actionSimple) Call(env *Env, args []string, config *Config) error {
 	return fn(env, args)
 }
 
-type actionWithConfig func(env Env, args []string, config *Config) error
+type actionWithConfig func(env *Env, args []string, config *Config) error
 
-func (fn actionWithConfig) Call(env Env, args []string, config *Config) error {
+func (fn actionWithConfig) Call(env *Env, args []string, config *Config) error {
 	var err error
 	if config == nil {
 		config, err = LoadConfig(env)
@@ -27,7 +27,7 @@ func (fn actionWithConfig) Call(env Env, args []string, config *Config) error {
 }
 
 type action interface {
-	Call(env Env, args []string, config *Config) error
+	Call(env *Env, args []string, config *Config) error
 }
 
 // Cmd represents a direnv sub-command
@@ -70,7 +70,7 @@ func init() {
 }
 
 func cmdWithWarnTimeout(fn action) action {
-	return actionWithConfig(func(env Env, args []string, config *Config) (err error) {
+	return actionWithConfig(func(env *Env, args []string, config *Config) (err error) {
 		done := make(chan bool, 1)
 		go func() {
 			select {
@@ -88,7 +88,7 @@ func cmdWithWarnTimeout(fn action) action {
 }
 
 // CommandsDispatch is called by the main() function to dispatch to a sub-command
-func CommandsDispatch(env Env, args []string) error {
+func CommandsDispatch(env *Env, args []string) error {
 	var command *Cmd
 	var commandName string
 	var commandPrefix string

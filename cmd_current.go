@@ -13,7 +13,7 @@ var CmdCurrent = &Cmd{
 	Action:  actionSimple(cmdCurrentAction),
 }
 
-func cmdCurrentAction(env Env, args []string) (err error) {
+func cmdCurrentAction(env *Env, args []string) (err error) {
 	if len(args) < 2 {
 		err = errors.New("missing PATH argument")
 		return
@@ -21,7 +21,7 @@ func cmdCurrentAction(env Env, args []string) (err error) {
 
 	path := args[1]
 	watches := NewFileTimes()
-	watchString, ok := env[DIRENV_WATCHES]
+	watchString, ok := env.EnvVars[DIRENV_WATCHES]
 	if ok {
 		err = watches.Unmarshal(watchString)
 		if err != nil {

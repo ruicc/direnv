@@ -15,7 +15,7 @@ var CmdDump = &Cmd{
 	Action:  actionSimple(cmdDumpAction),
 }
 
-func cmdDumpAction(env Env, args []string) (err error) {
+func cmdDumpAction(env *Env, args []string) (err error) {
 	target := "gzenv"
 	w := os.Stdout
 

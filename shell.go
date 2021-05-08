@@ -14,7 +14,7 @@ type Shell interface {
 	Export(e ShellExport) string
 
 	// Dump outputs and evaluatable string that sets the env in the host shell
-	Dump(env Env) string
+	Dump(env *Env) string
 }
 
 // ShellExport represents environment variables to add and remove on the host

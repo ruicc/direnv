@@ -25,8 +25,8 @@ func (sh vim) Export(e ShellExport) (out string) {
 	return out
 }
 
-func (sh vim) Dump(env Env) (out string) {
-	for key, value := range env {
+func (sh vim) Dump(env *Env) (out string) {
+	for key, value := range env.EnvVars {
 		out += sh.export(key, value)
 	}
 	return out

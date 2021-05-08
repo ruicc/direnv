@@ -14,7 +14,7 @@ var CmdApplyDump = &Cmd{
 	Action:  actionSimple(cmdApplyDumpAction),
 }
 
-func cmdApplyDumpAction(env Env, args []string) (err error) {
+func cmdApplyDumpAction(env *Env, args []string) (err error) {
 	if len(args) < 2 {
 		return fmt.Errorf("not enough arguments")
 	}

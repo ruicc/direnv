@@ -16,7 +16,7 @@ var CmdExport = &Cmd{
 	Action:  cmdWithWarnTimeout(actionWithConfig(exportCommand)),
 }
 
-func exportCommand(currentEnv Env, args []string, config *Config) (err error) {
+func exportCommand(currentEnv *Env, args []string, config *Config) (err error) {
 	defer log.SetPrefix(log.Prefix())
 	log.SetPrefix(log.Prefix() + "export:")
 	logDebug("start")
@@ -61,7 +61,7 @@ func exportCommand(currentEnv Env, args []string, config *Config) (err error) {
 		return
 	}
 
-	var previousEnv, newEnv Env
+	var previousEnv, newEnv *Env
 
 	if previousEnv, err = config.Revert(currentEnv); err != nil {
 		err = fmt.Errorf("Revert() failed: %w", err)

@@ -19,7 +19,7 @@ var CmdWatchList = &Cmd{
 	Action:  actionSimple(watchListCommand),
 }
 
-func watchListCommand(env Env, args []string) (err error) {
+func watchListCommand(env *Env, args []string) (err error) {
 	var shellName string
 
 	if len(args) >= 2 {
@@ -35,7 +35,7 @@ func watchListCommand(env Env, args []string) (err error) {
 	}
 
 	watches := NewFileTimes()
-	watchString, ok := env[DIRENV_WATCHES]
+	watchString, ok := env.EnvVars[DIRENV_WATCHES]
 	if ok {
 		err = watches.Unmarshal(watchString)
 		if err != nil {

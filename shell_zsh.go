@@ -37,8 +37,8 @@ func (sh zsh) Export(e ShellExport) (out string) {
 	return out
 }
 
-func (sh zsh) Dump(env Env) (out string) {
-	for key, value := range env {
+func (sh zsh) Dump(env *Env) (out string) {
+	for key, value := range env.EnvVars {
 		out += sh.export(key, value)
 	}
 	return out
