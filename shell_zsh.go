@@ -67,9 +67,9 @@ func (sh zsh) escape(str string) string {
 }
 
 func (sh zsh) alias(key, value string) string {
-	return "alias '" + key + "'='" + value + "';"
+	return "alias " + sh.escape(key) + "=" + sh.escape(value) + ";"
 }
 
 func (sh zsh) unalias(key string) string {
-	return "unalias '" + key + "';"
+	return "unalias " + sh.escape(key) + ";"
 }
