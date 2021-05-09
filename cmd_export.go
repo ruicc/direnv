@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"sort"
 	"strings"
@@ -11,7 +12,7 @@ import (
 var CmdExport = &Cmd{
 	Name:    "export",
 	Desc:    "loads an .envrc and prints the diff in terms of exports",
-	Args:    []string{"SHELL"},
+	Args:    []string{"SHELL", "shell_context_path"},
 	Private: true,
 	Action:  cmdWithWarnTimeout(actionWithConfig(exportCommand)),
 }
@@ -30,6 +31,26 @@ func exportCommand(currentEnv *Env, args []string, config *Config) (err error) {
 	shell := DetectShell(target)
 	if shell == nil {
 		return fmt.Errorf("unknown target shell '%s'", target)
+	}
+
+	if len(args) > 2 && config.EnableAliasExport {
+		aliasListPath := args[2]
+		var rawAliases []byte
+		rawAliases, err = ioutil.ReadFile(aliasListPath)
+		if err != nil {
+			err = fmt.Errorf("Reading alias list failed: %w", err)
+			logDebug("err: %v", err)
+			return
+		}
+		var aliasMap map[string]string
+		aliasMap, err = ParseAliases(rawAliases, 0, "=", "'") // TODO: Define shell.ParseAliases(rawAliases)
+		if err != nil {
+			err = fmt.Errorf("Parsing alias list failed: %w", err)
+			logDebug("err: %v", err)
+			return
+		}
+		logDebug("aliasMap: %v", aliasMap)
+		currentEnv.Aliases = aliasMap
 	}
 
 	logDebug("loading RCs")
@@ -89,8 +110,12 @@ func exportCommand(currentEnv *Env, args []string, config *Config) (err error) {
 		}
 	}
 
-	if out := diffStatus(previousEnv.Diff(newEnv)); out != "" {
-		logStatus(currentEnv, "export %s", out)
+	envvarStat, aliasStat := diffStatus(previousEnv.Diff(newEnv))
+	if envvarStat != "" {
+		logStatus(currentEnv, "export %s", envvarStat)
+	}
+	if aliasStat != "" {
+		logStatus(currentEnv, "alias %s", aliasStat)
 	}
 
 	diffString := currentEnv.Diff(newEnv).ToShell(shell)
@@ -100,32 +125,50 @@ func exportCommand(currentEnv *Env, args []string, config *Config) (err error) {
 }
 
 // Return a string of +/-/~ indicators of an environment diff
-func diffStatus(oldDiff *EnvDiff) string {
+func diffStatus(oldDiff *EnvDiff) (string, string) {
 	if oldDiff.Any() {
-		var out []string
-		for key := range oldDiff.Prev {
-			_, ok := oldDiff.Next[key]
+		var envvarOut []string
+		var aliasOut []string
+		for key := range oldDiff.PrevEnvVars {
+			_, ok := oldDiff.NextEnvVars[key]
 			if !ok && !direnvKey(key) {
-				out = append(out, "-"+key)
+				envvarOut = append(envvarOut, "-"+key)
 			}
 		}
 
-		for key := range oldDiff.Next {
-			_, ok := oldDiff.Prev[key]
+		for key := range oldDiff.NextEnvVars {
+			_, ok := oldDiff.PrevEnvVars[key]
 			if direnvKey(key) {
 				continue
 			}
 			if ok {
-				out = append(out, "~"+key)
+				envvarOut = append(envvarOut, "~"+key)
 			} else {
-				out = append(out, "+"+key)
+				envvarOut = append(envvarOut, "+"+key)
 			}
 		}
 
-		sort.Strings(out)
-		return strings.Join(out, " ")
+		for key := range oldDiff.PrevAliases {
+			_, ok := oldDiff.NextAliases[key]
+			if !ok {
+				aliasOut = append(aliasOut, "-"+key)
+			}
+		}
+
+		for key := range oldDiff.NextAliases {
+			_, ok := oldDiff.PrevAliases[key]
+			if ok {
+				aliasOut = append(aliasOut, "~"+key)
+			} else {
+				aliasOut = append(aliasOut, "+"+key)
+			}
+		}
+
+		sort.Strings(envvarOut)
+		sort.Strings(aliasOut)
+		return strings.Join(envvarOut, " "), strings.Join(aliasOut, " ")
 	}
-	return ""
+	return "", ""
 }
 
 func direnvKey(key string) bool {

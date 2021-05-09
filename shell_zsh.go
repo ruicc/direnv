@@ -8,8 +8,10 @@ var Zsh Shell = zsh{}
 
 const zshHook = `
 _direnv_hook() {
-  trap -- '' SIGINT;
-  eval "$("{{.SelfPath}}" export zsh)";
+  local alias_list=$(mktemp)
+  trap -- "rm $alias_list" SIGINT;
+  alias >> "$alias_list"
+  eval "$("{{.SelfPath}}" export zsh "$alias_list")";
   trap - SIGINT;
 }
 typeset -ag precmd_functions;
@@ -34,7 +36,14 @@ func (sh zsh) Export(e *ShellExport) (out string) {
 			out += sh.export(key, *value)
 		}
 	}
-	// TODO: Aliases
+	for key, value := range e.Aliases {
+		if value == nil {
+			out += sh.unalias(key)
+		} else {
+			out += sh.alias(key, *value)
+		}
+	}
+	logDebug("Export(zsh): %s", out)
 	return out
 }
 
@@ -55,4 +64,12 @@ func (sh zsh) unset(key string) string {
 
 func (sh zsh) escape(str string) string {
 	return BashEscape(str)
+}
+
+func (sh zsh) alias(key, value string) string {
+	return "alias '" + key + "'='" + value + "';"
+}
+
+func (sh zsh) unalias(key string) string {
+	return "unalias '" + key + "';"
 }

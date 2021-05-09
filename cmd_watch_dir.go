@@ -53,7 +53,7 @@ func watchDirCommand(env *Env, args []string) (err error) {
 	}
 
 	e := NewShellExport()
-	e.Add(DIRENV_WATCHES, watches.Marshal())
+	e.AddEnvVar(DIRENV_WATCHES, watches.Marshal())
 
 	os.Stdout.WriteString(shell.Export(e))
 

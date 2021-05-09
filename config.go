@@ -14,20 +14,21 @@ import (
 
 // Config represents the direnv configuration and state.
 type Config struct {
-	Env             *Env
-	WorkDir         string // Current directory
-	ConfDir         string
-	CacheDir        string
-	DataDir         string
-	SelfPath        string
-	BashPath        string
-	RCDir           string
-	TomlPath        string
-	DisableStdin    bool
-	StrictEnv       bool
-	WarnTimeout     time.Duration
-	WhitelistPrefix []string
-	WhitelistExact  map[string]bool
+	Env               *Env
+	WorkDir           string // Current directory
+	ConfDir           string
+	CacheDir          string
+	DataDir           string
+	SelfPath          string
+	BashPath          string
+	RCDir             string
+	TomlPath          string
+	DisableStdin      bool
+	StrictEnv         bool
+	WarnTimeout       time.Duration
+	WhitelistPrefix   []string
+	WhitelistExact    map[string]bool
+	EnableAliasExport bool
 }
 
 type tomlDuration struct {
@@ -61,7 +62,8 @@ type tomlWhitelist struct {
 // LoadConfig opens up the direnv configuration from the Env.
 func LoadConfig(env *Env) (config *Config, err error) {
 	config = &Config{
-		Env: env,
+		Env:               env,
+		EnableAliasExport: true,
 	}
 
 	config.ConfDir = env.EnvVars[DIRENV_CONFIG]
@@ -209,13 +211,11 @@ func (config *Config) FindRC() (*RC, error) {
 // returning a new environment
 func (config *Config) Revert(env *Env) (*Env, error) {
 	if config.Env.EnvVars[DIRENV_DIFF] == "" {
-		envCopy := env.Copy()
-		return envCopy, nil
+		return env.Copy(), nil
 	}
 	diff, err := LoadEnvDiff(config.Env.EnvVars[DIRENV_DIFF])
 	if err == nil {
-		patched := diff.Reverse().Patch(env)
-		return patched, nil // TODO: Aliases? => Should patch to env. Correct.
+		return diff.Reverse().Patch(env), nil
 	}
 	return nil, err
 }

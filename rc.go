@@ -150,15 +150,28 @@ func (rc *RC) Load(previousEnv *Env) (newEnv *Env, err error) {
 		return
 	}
 
+	aliasList, err := ioutil.TempFile("", "alias_list")
+	if err != nil {
+		err = fmt.Errorf("Creating TempFile failed: %w", err)
+		return
+	}
+	aliasListPath := aliasList.Name()
+	aliasList.Write(outputBashAliases(previousEnv))
+	if err = aliasList.Close(); err != nil {
+		err = fmt.Errorf("Closing TempFile failed: %w", err)
+		return
+	}
+
 	prelude := ""
 	if config.StrictEnv {
 		prelude = "set -euo pipefail && "
 	}
 
 	arg := fmt.Sprintf(
-		`%seval "$("%s" stdlib)" && __main__ source_env "%s"`,
+		`%seval "$("%s" stdlib)" && __main__ "%s" source_env "%s"`,
 		prelude,
 		direnv,
+		aliasListPath,
 		rc.Path(),
 	)
 
@@ -190,6 +203,7 @@ func (rc *RC) Load(previousEnv *Env) (newEnv *Env, err error) {
 	if out, err := cmd.Output(); err == nil && len(out) > 0 {
 		var newEnv2 *Env
 		newEnv2, err = LoadEnvJSON(out)
+		logDebug("Output JSON: %s", out)
 		if err == nil {
 			newEnv = newEnv2
 		}
@@ -279,4 +293,17 @@ func findUp(searchDir string, fileName string) (path string) {
 		}
 	}
 	return ""
+}
+
+func outputBashAliases(env *Env) []byte {
+	var out []byte
+	for key, val := range env.Aliases {
+		if IgnoredAlias(key) {
+			continue
+		}
+		alias := []byte("alias '" + key + "'='" + val + "';\n")
+		out = append(out, alias...)
+	}
+
+	return out
 }

@@ -1207,7 +1207,7 @@ on_git_branch() {
   [ "$(git branch --show-current)" = "$1" ]
 }
 
-# Usage: __main__ <cmd> [...<args>]
+# Usage: __main__ <aliases_path> <cmd> [...<args>]
 #
 # Used by rc.go
 __main__() {
@@ -1215,9 +1215,18 @@ __main__() {
   exec 3>&1
   exec 1>&2
 
+  local alias_list=$1
+  shift
+  # shellcheck disable=SC1090
+  source "$alias_list"
+
   __dump_at_exit() {
     local ret=$?
-    "$direnv" dump json "" >&3
+    local alias_list
+    alias_list="$(mktemp)"
+    alias >> "$alias_list"
+    "$direnv" dump json "" "$alias_list" >&3
+    rm -f "$alias_list"
     trap - EXIT
     exit "$ret"
   }

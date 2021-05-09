@@ -1210,7 +1210,7 @@ const StdLib = "#!/usr/bin/env bash\n" +
 	"  [ \"$(git branch --show-current)\" = \"$1\" ]\n" +
 	"}\n" +
 	"\n" +
-	"# Usage: __main__ <cmd> [...<args>]\n" +
+	"# Usage: __main__ <aliases_path> <cmd> [...<args>]\n" +
 	"#\n" +
 	"# Used by rc.go\n" +
 	"__main__() {\n" +
@@ -1218,9 +1218,18 @@ const StdLib = "#!/usr/bin/env bash\n" +
 	"  exec 3>&1\n" +
 	"  exec 1>&2\n" +
 	"\n" +
+	"  local alias_list=$1\n" +
+	"  shift\n" +
+	"  # shellcheck disable=SC1090\n" +
+	"  source \"$alias_list\"\n" +
+	"\n" +
 	"  __dump_at_exit() {\n" +
 	"    local ret=$?\n" +
-	"    \"$direnv\" dump json \"\" >&3\n" +
+	"    local alias_list\n" +
+	"    alias_list=\"$(mktemp)\"\n" +
+	"    alias >> \"$alias_list\"\n" +
+	"    \"$direnv\" dump json \"\" \"$alias_list\" >&3\n" +
+	"    rm -f \"$alias_list\"\n" +
 	"    trap - EXIT\n" +
 	"    exit \"$ret\"\n" +
 	"  }\n" +

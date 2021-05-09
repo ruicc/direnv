@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -100,8 +102,9 @@ func (env Env) ToShell(shell Shell) string {
 	e := NewShellExport()
 
 	for key, value := range env.EnvVars {
-		e.Add(key, value)
+		e.AddEnvVar(key, value)
 	}
+	// TODO: Aliases?
 
 	return shell.Export(e)
 }
@@ -112,8 +115,8 @@ func (env Env) Serialize() string {
 }
 
 // Diff returns the diff between the current env and the passed env
-func (env Env) Diff(other *Env) *EnvDiff {
-	return BuildEnvDiff(&env, other)
+func (env *Env) Diff(other *Env) *EnvDiff {
+	return BuildEnvDiff(env, other)
 }
 
 // Fetch tries to get the value associated with the given 'key', or returns
@@ -126,4 +129,23 @@ func (env Env) Fetch(key, def string) string {
 		v = def
 	}
 	return v
+}
+
+func ParseAliases(rawAliases []byte, prefixLen int, separator string, enclosure string) (map[string]string, error) {
+	aliasMap := make(map[string]string)
+	sc := bufio.NewScanner(strings.NewReader(string(rawAliases)))
+	for sc.Scan() {
+		line := sc.Text()
+		if len(line) <= 0 {
+			continue
+		}
+		eqIdx := strings.Index(line, separator)
+		if eqIdx == -1 {
+			return nil, fmt.Errorf("'%s' not found in zsh alias line: %s", separator, line)
+		}
+		key := strings.Trim(line[prefixLen:eqIdx], enclosure)
+		val := strings.Trim(line[eqIdx+1:], enclosure)
+		aliasMap[key] = val
+	}
+	return aliasMap, nil
 }

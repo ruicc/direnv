@@ -26,35 +26,46 @@ var IgnoredKeys = map[string]bool{
 	"SHLVL":     true,
 	"_":         true,
 }
+var IgnoredAliasKeys = map[string]bool{
+	// Special alias
+	"-": true,
+}
 
 // EnvDiff represents the diff between two environments
 type EnvDiff struct {
-	Prev map[string]string `json:"p"`
-	Next map[string]string `json:"n"`
+	PrevEnvVars map[string]string `json:"pe"`
+	NextEnvVars map[string]string `json:"ne"`
+	PrevAliases map[string]string `json:"pa"`
+	NextAliases map[string]string `json:"na"`
 }
 
 // NewEnvDiff is an empty constructor for EnvDiff
 func NewEnvDiff() *EnvDiff {
-	return &EnvDiff{make(map[string]string), make(map[string]string)}
+	return &EnvDiff{
+		make(map[string]string),
+		make(map[string]string),
+		make(map[string]string),
+		make(map[string]string),
+	}
 }
 
 // BuildEnvDiff analyses the changes between 'e1' and 'e2' and builds an
 // EnvDiff out of it.
 func BuildEnvDiff(e1, e2 *Env) *EnvDiff {
-	// TODO: Aliases?
 	diff := NewEnvDiff()
 
-	in := func(key string, e *Env) bool {
-		_, ok := e.EnvVars[key]
+	in := func(key string, m map[string]string) bool {
+		_, ok := m[key]
 		return ok
 	}
 
+	// Handle EnvVars
 	for key := range e1.EnvVars {
 		if IgnoredEnv(key) {
 			continue
 		}
-		if e2.EnvVars[key] != e1.EnvVars[key] || !in(key, e2) {
-			diff.Prev[key] = e1.EnvVars[key]
+		if e2.EnvVars[key] != e1.EnvVars[key] || !in(key, e2.EnvVars) {
+			diff.PrevEnvVars[key] = e1.EnvVars[key]
 		}
 	}
 
@@ -62,8 +73,27 @@ func BuildEnvDiff(e1, e2 *Env) *EnvDiff {
 		if IgnoredEnv(key) {
 			continue
 		}
-		if e2.EnvVars[key] != e1.EnvVars[key] || !in(key, e1) {
-			diff.Next[key] = e2.EnvVars[key]
+		if e2.EnvVars[key] != e1.EnvVars[key] || !in(key, e1.EnvVars) {
+			diff.NextEnvVars[key] = e2.EnvVars[key]
+		}
+	}
+
+	// Handle Aliases
+	for key := range e1.Aliases {
+		if IgnoredAlias(key) {
+			continue
+		}
+		if e2.Aliases[key] != e1.Aliases[key] || !in(key, e2.Aliases) {
+			diff.PrevAliases[key] = e1.Aliases[key]
+		}
+	}
+
+	for key := range e2.Aliases {
+		if IgnoredAlias(key) {
+			continue
+		}
+		if e2.Aliases[key] != e1.Aliases[key] || !in(key, e1.Aliases) {
+			diff.NextAliases[key] = e2.Aliases[key]
 		}
 	}
 
@@ -79,7 +109,8 @@ func LoadEnvDiff(gzenvStr string) (diff *EnvDiff, err error) {
 
 // Any returns if the diff contains any changes.
 func (diff *EnvDiff) Any() bool {
-	return len(diff.Prev) > 0 || len(diff.Next) > 0
+	return len(diff.PrevEnvVars) > 0 || len(diff.NextEnvVars) > 0 ||
+		len(diff.PrevAliases) > 0 || len(diff.NextAliases) > 0
 }
 
 // ToShell applies the env diff as a set of commands that are understood by
@@ -88,15 +119,26 @@ func (diff *EnvDiff) Any() bool {
 func (diff *EnvDiff) ToShell(shell Shell) string {
 	e := NewShellExport()
 
-	for key := range diff.Prev {
-		_, ok := diff.Next[key]
+	for key := range diff.PrevEnvVars {
+		_, ok := diff.NextEnvVars[key]
 		if !ok {
-			e.Remove(key)
+			e.RemoveEnvVar(key)
 		}
 	}
 
-	for key, value := range diff.Next {
-		e.Add(key, value)
+	for key, value := range diff.NextEnvVars {
+		e.AddEnvVar(key, value)
+	}
+
+	for key := range diff.PrevAliases {
+		_, ok := diff.NextAliases[key]
+		if !ok {
+			e.RemoveAlias(key)
+		}
+	}
+
+	for key, value := range diff.NextAliases {
+		e.AddAlias(key, value)
 	}
 
 	return shell.Export(e)
@@ -111,12 +153,24 @@ func (diff *EnvDiff) Patch(env *Env) (newEnv *Env) {
 		newEnv.EnvVars[k] = v
 	}
 
-	for key := range diff.Prev {
+	for key := range diff.PrevEnvVars {
 		delete(newEnv.EnvVars, key)
 	}
 
-	for key, value := range diff.Next {
+	for key, value := range diff.NextEnvVars {
 		newEnv.EnvVars[key] = value
+	}
+
+	for k, v := range env.Aliases {
+		newEnv.Aliases[k] = v
+	}
+
+	for key := range diff.PrevAliases {
+		delete(newEnv.Aliases, key)
+	}
+
+	for key, value := range diff.NextAliases {
+		newEnv.Aliases[key] = value
 	}
 
 	return newEnv
@@ -124,7 +178,12 @@ func (diff *EnvDiff) Patch(env *Env) (newEnv *Env) {
 
 // Reverse flips the diff so that it applies the other way around.
 func (diff *EnvDiff) Reverse() *EnvDiff {
-	return &EnvDiff{diff.Next, diff.Prev}
+	return &EnvDiff{
+		diff.NextEnvVars,
+		diff.PrevEnvVars,
+		diff.NextAliases,
+		diff.PrevAliases,
+	}
 }
 
 // Serialize marshalls the environment diff to the gzenv format.
@@ -143,5 +202,10 @@ func IgnoredEnv(key string) bool {
 		return true
 	}
 	_, found := IgnoredKeys[key]
+	return found
+}
+
+func IgnoredAlias(key string) bool {
+	_, found := IgnoredAliasKeys[key]
 	return found
 }

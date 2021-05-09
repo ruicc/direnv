@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 )
@@ -30,6 +31,11 @@ func cmdDumpAction(env *Env, args []string) (err error) {
 		filePath = os.Getenv(DIRENV_DUMP_FILE_PATH)
 	}
 
+	var aliasesPath string
+	if len(args) > 3 {
+		aliasesPath = args[3]
+	}
+
 	if filePath != "" {
 		if num, err := strconv.Atoi(filePath); err == nil {
 			w = os.NewFile(uintptr(num), filePath)
@@ -39,6 +45,18 @@ func cmdDumpAction(env *Env, args []string) (err error) {
 				return err
 			}
 		}
+	}
+
+	if aliasesPath != "" {
+		aliases, err := ioutil.ReadFile(aliasesPath)
+		if err != nil {
+			return fmt.Errorf("Reading aliases file failed: %w", err)
+		}
+		aliasMap, err := ParseAliases(aliases, 6, "=", "'")
+		if err != nil {
+			return fmt.Errorf("Parsing aliases failed: %w", err)
+		}
+		env.Aliases = aliasMap
 	}
 
 	shell := DetectShell(target)

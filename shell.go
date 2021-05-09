@@ -32,15 +32,19 @@ func NewShellExport() *ShellExport {
 }
 
 // Add represents the additon of a new environment variable
-func (e ShellExport) Add(key, value string) {
+func (e ShellExport) AddEnvVar(key, value string) {
 	e.EnvVars[key] = &value
-	// TODO: Aliases?
+}
+func (e ShellExport) AddAlias(key, value string) {
+	e.Aliases[key] = &value
 }
 
 // Remove represents the removal of a given `key` environment variable.
-func (e ShellExport) Remove(key string) {
+func (e ShellExport) RemoveEnvVar(key string) {
 	e.EnvVars[key] = nil
-	// TODO: Aliases?
+}
+func (e ShellExport) RemoveAlias(key string) {
+	e.Aliases[key] = nil
 }
 
 // DetectShell returns a Shell instance from the given target.
