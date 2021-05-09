@@ -9,10 +9,11 @@ var Zsh Shell = zsh{}
 const zshHook = `
 _direnv_hook() {
   local alias_list=$(mktemp)
-  trap -- "rm $alias_list" SIGINT;
+  trap -- "rm -f $alias_list" SIGINT;
   alias >> "$alias_list"
   eval "$("{{.SelfPath}}" export zsh "$alias_list")";
   trap - SIGINT;
+  rm -f "$alias_list"
 }
 typeset -ag precmd_functions;
 if [[ -z ${precmd_functions[(r)_direnv_hook]} ]]; then
@@ -52,6 +53,10 @@ func (sh zsh) Dump(env *Env) (out string) {
 		out += sh.export(key, value)
 	}
 	return out
+}
+
+func (sh zsh) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return ParseAliases(rawAliases, 0, "=", "'")
 }
 
 func (sh zsh) export(key, value string) string {

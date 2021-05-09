@@ -59,6 +59,10 @@ func (sh fish) Dump(env *Env) (out string) {
 	return out
 }
 
+func (sh fish) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return ParseAliases(rawAliases, 6, " ", "'")
+}
+
 func (sh fish) export(key, value string) string {
 	if key == "PATH" {
 		command := "set -x -g PATH"

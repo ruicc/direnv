@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/direnv/direnv/v2/gzenv"
 )
@@ -21,4 +22,8 @@ func (s gzenvShell) Export(e *ShellExport) string {
 
 func (s gzenvShell) Dump(env *Env) string {
 	return gzenv.Marshal(env)
+}
+
+func (sh gzenvShell) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return nil, fmt.Errorf("Aliases are not supported in gzenv")
 }

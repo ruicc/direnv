@@ -10,9 +10,12 @@ var Bash Shell = bash{}
 const bashHook = `
 _direnv_hook() {
   local previous_exit_status=$?;
-  trap -- '' SIGINT;
-  eval "$("{{.SelfPath}}" export bash)";
+  local alias_list=$(mktemp)
+  trap -- "rm -f $alias_list" SIGINT;
+  alias >> "$alias_list"
+  eval "$("{{.SelfPath}}" export bash "$alias_list")";
   trap - SIGINT;
+  rm -f "$alias_list"
   return $previous_exit_status;
 };
 if ! [[ "${PROMPT_COMMAND:-}" =~ _direnv_hook ]]; then
@@ -32,7 +35,13 @@ func (sh bash) Export(e *ShellExport) (out string) {
 			out += sh.export(key, *value)
 		}
 	}
-	// TODO: Aliases
+	for key, value := range e.Aliases {
+		if value == nil {
+			out += sh.unalias(key)
+		} else {
+			out += sh.alias(key, *value)
+		}
+	}
 	return out
 }
 
@@ -43,12 +52,24 @@ func (sh bash) Dump(env *Env) (out string) {
 	return out
 }
 
+func (sh bash) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return ParseAliases(rawAliases, 6, "=", "'")
+}
+
 func (sh bash) export(key, value string) string {
 	return "export " + sh.escape(key) + "=" + sh.escape(value) + ";"
 }
 
 func (sh bash) unset(key string) string {
 	return "unset " + sh.escape(key) + ";"
+}
+
+func (sh bash) alias(key, value string) string {
+	return "alias " + sh.escape(key) + "=" + sh.escape(value) + ";"
+}
+
+func (sh bash) unalias(key string) string {
+	return "unalias " + sh.escape(key) + ";"
 }
 
 func (sh bash) escape(str string) string {

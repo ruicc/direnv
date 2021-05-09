@@ -33,6 +33,10 @@ func (sh tcsh) Dump(env *Env) (out string) {
 	return out
 }
 
+func (sh tcsh) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return ParseAliases(rawAliases, 0, "\t", "'")
+}
+
 func (sh tcsh) export(key, value string) string {
 	if key == "PATH" {
 		command := "set path = ("

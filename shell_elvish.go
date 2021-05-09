@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 )
 
 type elvish struct{}
@@ -48,6 +49,10 @@ func (sh elvish) Dump(env *Env) (out string) {
 		panic(err)
 	}
 	return buf.String()
+}
+
+func (sh elvish) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return nil, fmt.Errorf("Aliases are not supported in elvish")
 }
 
 var (

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"path/filepath"
+	"strings"
 )
 
 // Shell is the interface that represents the interaction with the host shell.
@@ -15,6 +18,8 @@ type Shell interface {
 
 	// Dump outputs and evaluatable string that sets the env in the host shell
 	Dump(env *Env) string
+
+	ParseAliases(rawAliases []byte) (map[string]string, error)
 }
 
 // ShellExport represents environment variables to add and remove on the host
@@ -77,4 +82,23 @@ func DetectShell(target string) Shell {
 	}
 
 	return nil
+}
+
+func ParseAliases(rawAliases []byte, prefixLen int, separator string, enclosure string) (map[string]string, error) {
+	aliasMap := make(map[string]string)
+	sc := bufio.NewScanner(strings.NewReader(string(rawAliases)))
+	for sc.Scan() {
+		line := sc.Text()
+		if len(line) <= 0 {
+			continue
+		}
+		eqIdx := strings.Index(line, separator)
+		if eqIdx == -1 {
+			return nil, fmt.Errorf("'%s' not found in zsh alias line: %s", separator, line)
+		}
+		key := strings.Trim(line[prefixLen:eqIdx], enclosure)
+		val := strings.Trim(line[eqIdx+1:], enclosure)
+		aliasMap[key] = val
+	}
+	return aliasMap, nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // jsonShell is not a real shell
@@ -32,4 +33,8 @@ func (sh jsonShell) Dump(env *Env) string {
 		panic(err)
 	}
 	return string(out)
+}
+
+func (sh jsonShell) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return nil, fmt.Errorf("Aliases are not supported in json")
 }

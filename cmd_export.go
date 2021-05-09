@@ -35,15 +35,15 @@ func exportCommand(currentEnv *Env, args []string, config *Config) (err error) {
 
 	if len(args) > 2 && config.EnableAliasExport {
 		aliasListPath := args[2]
-		var rawAliases []byte
-		rawAliases, err = ioutil.ReadFile(aliasListPath)
+		var aliasOutput []byte
+		aliasOutput, err = ioutil.ReadFile(aliasListPath)
 		if err != nil {
 			err = fmt.Errorf("Reading alias list failed: %w", err)
 			logDebug("err: %v", err)
 			return
 		}
 		var aliasMap map[string]string
-		aliasMap, err = ParseAliases(rawAliases, 0, "=", "'") // TODO: Define shell.ParseAliases(rawAliases)
+		aliasMap, err = shell.ParseAliases(aliasOutput)
 		if err != nil {
 			err = fmt.Errorf("Parsing alias list failed: %w", err)
 			logDebug("err: %v", err)

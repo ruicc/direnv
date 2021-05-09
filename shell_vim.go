@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -31,6 +32,10 @@ func (sh vim) Dump(env *Env) (out string) {
 		out += sh.export(key, value)
 	}
 	return out
+}
+
+func (sh vim) ParseAliases(rawAliases []byte) (map[string]string, error) {
+	return nil, fmt.Errorf("Aliases are not supported yet in vim")
 }
 
 func (sh vim) export(key, value string) string {
